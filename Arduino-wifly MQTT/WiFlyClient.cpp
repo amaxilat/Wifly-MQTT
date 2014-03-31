@@ -173,7 +173,7 @@ void WiFlyClient::stop() {
   // In the interests of getting something out the door--that somewhat
   // works--this is what we're going with at the moment.
 
-  _WiFly.enterCommandMode();
+  //_WiFly.enterCommandMode();
   _WiFly.uart->println("close");
   // We ignore the response which could be "*CLOS*" or could be an
   // error if the connection is no longer open.

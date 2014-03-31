@@ -7,19 +7,15 @@
 #include "PubSubClient.h"
 #include <string.h>
 
-PubSubClient::PubSubClient(Client& client) {
-	this->_client = &client;
-}
-
-PubSubClient::PubSubClient(uint8_t *ip, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int), Client& client) {
-	this->_client = &client;
+PubSubClient::PubSubClient(uint8_t *ip, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int),WiFly *wifly) {
+	this->_client = wifly;
 	this->callback = callback;
 	this->ip = ip;
 	this->port = port;
 }
 
-PubSubClient::PubSubClient(char* domain, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int), Client& client){
-	_client = &client;
+PubSubClient::PubSubClient(char* domain, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int),WiFly *wifly){
+	this->_client = wifly;
 	this->callback = callback;
 	this->domain = domain;
 	this->port = port;
@@ -30,13 +26,11 @@ boolean PubSubClient::connect(char *id) {
 }
 
 boolean PubSubClient::connect(char *id, char* willTopic, uint8_t willQos, uint8_t willRetain, char* willMessage) {
-	if (!connected()) {
 		int result = 0;
-		
 		if (domain != NULL) {// connect using domain of server
-			result = _client->connect(this->domain, this->port);
+			result = _client->open(this->domain, this->port);
 		} else {// connect using ip of server
-			result = _client->connect(this->ip, this->port);
+			result = _client->open(this->ip, this->port);
 		}
 		
 		if (result) {
@@ -72,7 +66,7 @@ boolean PubSubClient::connect(char *id, char* willTopic, uint8_t willQos, uint8_
 			while (!_client->available()) {
 				unsigned long t= millis();
 				if (t-lastInActivity > MQTT_KEEPALIVE*1000) {
-					_client->stop();
+					_client->close();
 					return false;
 				}
 			}
@@ -86,9 +80,8 @@ boolean PubSubClient::connect(char *id, char* willTopic, uint8_t willQos, uint8_
 				return true;
 			}
 		}
-		_client->stop();
-	}
-	return false;
+		_client->close();
+		return false;
 }
 
 uint8_t PubSubClient::readByte() {
@@ -127,7 +120,7 @@ boolean PubSubClient::loop() {
 		unsigned long t = millis();
 		if ((t - lastInActivity > MQTT_KEEPALIVE*1000) || (t - lastOutActivity > MQTT_KEEPALIVE*1000)) {
 			if (pingOutstanding) {
-				_client->stop();
+				_client->close();
 				return false;
 			} else {// PINGREQ fixed header (2 bytes --- pingreq msg type + 0 for remaining length)
 				_client->write(MQTTPINGREQ);
@@ -241,7 +234,7 @@ boolean PubSubClient::subscribe(char* topic) {
 void PubSubClient::disconnect() {
 	_client->write(MQTTDISCONNECT);
 	_client->write((uint8_t)0);
-	_client->stop();
+	_client->close();
 	lastInActivity = millis();
 	lastOutActivity = millis();
 }
@@ -261,7 +254,7 @@ uint16_t PubSubClient::writeString(char* string, uint8_t* buf, uint16_t pos) {//
 
 
 boolean PubSubClient::connected() {
-	int rc = (int)_client->connected();
-	if (!rc) _client->stop();
+	int rc = (int)_client->isConnected();
+	if (!rc) _client->close();
 	return rc;
 }

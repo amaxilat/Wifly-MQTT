@@ -8,9 +8,7 @@
 #define PubSubClient_h
 
 #include <Arduino.h>
-
-#include "Client.h"
-
+#include <WiFlyHQ.h>
 // MQTT_MAX_PACKET_SIZE : Maximum packet size
 #define MQTT_MAX_PACKET_SIZE 128
 
@@ -41,7 +39,6 @@
 
 class PubSubClient {
 private:
-	Client* _client;
 	uint8_t buffer[MQTT_MAX_PACKET_SIZE];
 	uint16_t nextMsgId;
 	unsigned long lastOutActivity;
@@ -55,10 +52,10 @@ private:
 	uint8_t *ip;
 	char* domain;
 	uint16_t port;
+	WiFly * _client;
 public:
-	PubSubClient(Client& client);
-	PubSubClient(uint8_t *, uint16_t, void (*)(char*,uint8_t*,unsigned int), Client& client);
-	PubSubClient(char*, uint16_t, void (*)	(char*,uint8_t*,unsigned int), Client& client);
+	PubSubClient(uint8_t *, uint16_t, void (*)(char*,uint8_t*,unsigned int),WiFly*);
+	PubSubClient(char*, uint16_t, void (*)	(char*,uint8_t*,unsigned int),WiFly*);
 	boolean connect(char *);
 	boolean connect(char*, char*, uint8_t, uint8_t, char*);
 	void disconnect();
@@ -69,6 +66,7 @@ public:
 	boolean subscribe(char *);
 	boolean loop();
 	boolean connected();
+
 };
 
 #endif
